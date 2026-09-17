@@ -1,0 +1,45 @@
+---
+- name: Seguridad - Configuración de Firewall y SSH
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Instalar UFW (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: ufw
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Permitir tráfico SSH y HTTPS
+      community.general.ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - "22"
+        - "443"
+
+    - name: Activar firewall por defecto (Denegar resto del tráfico)
+      community.general.ufw:
+        state: enabled
+        default: deny
+
+    - name: Deshabilitar login de root por SSH
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin no'
+      notify: Reiniciar SSH
+
+    - name: Deshabilitar autenticación por contraseña en SSH
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+      notify: Reiniciar SSH
+
+  handlers:
+    - name: Reiniciar SSH
+      ansible.builtin.service:
+        name: sshd
+        state: restarted

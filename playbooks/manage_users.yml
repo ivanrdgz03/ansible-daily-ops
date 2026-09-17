@@ -1,0 +1,35 @@
+---
+- name: Gestión - Alta de usuarios y despliegue de llaves SSH
+  hosts: all
+  become: true
+  
+  vars:
+    # Lista de usuarios a crear en los servidores
+    usuarios_admin:
+      - sysadmin
+      - devops
+
+  tasks:
+    - name: Asegurar que los usuarios administradores existen
+      ansible.builtin.user:
+        name: "{{ item }}"
+        state: present
+        shell: /bin/bash
+        create_home: yes
+        groups: sudo # Usa wheel si tus servidores son CentOS/RedHat
+        append: yes
+      loop: "{{ usuarios_admin }}"
+
+    - name: Añadir clave SSH autorizada para el usuario sysadmin
+      ansible.posix.authorized_key:
+        user: sysadmin
+        state: present
+        # Reemplaza esto con tu clave pública real (cat ~/.ssh/id_rsa.pub)
+        key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... tu-usuario@tu-maquina"
+
+    - name: Bloquear acceso a usuarios antiguos (ejemplo de baja)
+      ansible.builtin.user:
+        name: ex_empleado
+        state: absent
+        remove: yes # Elimina también su directorio /home
+      ignore_errors: true # Ignora si el usuario ya no existe

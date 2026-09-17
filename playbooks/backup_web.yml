@@ -1,0 +1,27 @@
+---
+- name: Respaldo - Crear y descargar copia de seguridad
+  hosts: webservers
+  become: true
+
+  vars:
+    directorio_origen: "/var/www/html"
+    archivo_backup: "/tmp/backup_web_{{ ansible_date_time.date }}.tar.gz"
+    destino_local: "./backups/"
+
+  tasks:
+    - name: Comprimir el directorio de la aplicación
+      community.general.archive:
+        path: "{{ directorio_origen }}"
+        dest: "{{ archivo_backup }}"
+        format: gz
+
+    - name: Descargar el backup a la máquina local
+      ansible.builtin.fetch:
+        src: "{{ archivo_backup }}"
+        dest: "{{ destino_local }}"
+        flat: yes
+
+    - name: Eliminar el archivo temporal del servidor remoto
+      ansible.builtin.file:
+        path: "{{ archivo_backup }}"
+        state: absent

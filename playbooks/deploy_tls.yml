@@ -1,0 +1,36 @@
+---
+- name: Seguridad - Actualizar certificados TLS/SSL
+  hosts: webservers
+  become: true
+
+  vars:
+    ruta_cert: /etc/ssl/certs/domain.crt
+    ruta_key: /etc/ssl/private/domain.key
+    cert_local: files/tls/domain.crt
+    key_local: files/tls/domain.key
+    servicio_web: nginx
+
+  tasks:
+    - name: Desplegar el certificado público
+      ansible.builtin.copy:
+        src: "{{ cert_local }}"
+        dest: "{{ ruta_cert }}"
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Recargar servidor web
+
+    - name: Desplegar la clave privada de forma segura
+      ansible.builtin.copy:
+        src: "{{ key_local }}"
+        dest: "{{ ruta_key }}"
+        owner: root
+        group: root
+        mode: '0600'
+      notify: Recargar servidor web
+
+  handlers:
+    - name: Recargar servidor web
+      ansible.builtin.service:
+        name: "{{ servicio_web }}"
+        state: reloaded

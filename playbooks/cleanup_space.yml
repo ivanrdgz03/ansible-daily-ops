@@ -1,0 +1,33 @@
+---
+- name: Mantenimiento - Liberar espacio en disco
+  hosts: all
+  become: true
+  
+  tasks:
+    - name: Reducir logs de systemd (mantener solo los últimos 7 días)
+      ansible.builtin.command: journalctl --vacuum-time=7d
+      changed_when: false
+
+    - name: Buscar archivos en /tmp con más de 7 días de antigüedad
+      ansible.builtin.find:
+        paths: /tmp
+        age: 7d
+        file_type: file
+      register: archivos_tmp
+
+    - name: Eliminar archivos temporales antiguos de /tmp
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ archivos_tmp.files }}"
+      when: archivos_tmp.matched > 0
+
+    - name: Limpiar caché del gestor de paquetes (Debian/Ubuntu)
+      ansible.builtin.apt:
+        clean: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Limpiar caché del gestor de paquetes (RedHat/CentOS)
+      ansible.builtin.command: dnf clean all
+      when: ansible_os_family == "RedHat"
+      changed_when: false

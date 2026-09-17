@@ -1,0 +1,28 @@
+---
+- name: Auditoría - Comprobar caducidad de certificados TLS
+  hosts: webservers
+  become: true
+
+  vars:
+    ruta_cert: /etc/ssl/certs/domain.crt
+    dias_alerta: 30
+
+  tasks:
+    - name: Obtener información del certificado
+      community.crypto.x509_certificate_info:
+        path: "{{ ruta_cert }}"
+      register: info_cert
+
+    - name: Calcular días restantes
+      ansible.builtin.set_fact:
+        dias_restantes: "{{ ((info_cert.not_after | to_datetime('%Y%m%d%H%M%SZ')) - (ansible_date_time.iso8601 | to_datetime('%Y-%m-%dT%H:%M:%SZ'))).days }}"
+
+    - name: Alerta si caduca pronto
+      ansible.builtin.fail:
+        msg: "¡ALERTA! El certificado en {{ inventory_hostname }} caduca en {{ dias_restantes }} días."
+      when: dias_restantes | int < dias_alerta
+
+    - name: Estado del certificado
+      ansible.builtin.debug:
+        msg: "Todo OK. El certificado caduca en {{ dias_restantes }} días."
+      when: dias_restantes | int >= dias_alerta

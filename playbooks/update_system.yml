@@ -1,0 +1,19 @@
+- name: Mantenimiento - Actualizar sistema operativo y limpiar paquetes
+  hosts: all
+  become: true # Ejecutar como root (sudo)
+
+  tasks:
+    - name: Familia Debian - Actualizar caché, paquetes y limpiar huérfanos
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: dist
+        autoremove: true
+        autoclean: true
+      when: ansible_os_family == "Debian"
+
+    - name: Familia RedHat - Actualizar paquetes y limpiar huérfanos
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+        autoremove: true
+      when: ansible_os_family == "RedHat"

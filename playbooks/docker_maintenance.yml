@@ -1,0 +1,16 @@
+---
+- name: Docker - Limpieza profunda de recursos sin uso
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Limpiar sistema Docker (imágenes, contenedores y redes de más de 7 días)
+      ansible.builtin.command: docker system prune -a -f --filter "until=168h"
+      register: resultado_limpieza
+      # Solo reporta "changed" si realmente se liberó espacio
+      changed_when: "'Total reclaimed space: 0B' not in resultado_limpieza.stdout"
+
+    - name: Mostrar cuánto espacio se liberó
+      ansible.builtin.debug:
+        var: resultado_limpieza.stdout_lines
+      when: resultado_limpieza.changed

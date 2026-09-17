@@ -1,0 +1,22 @@
+---
+- name: Auditoría - Verificar servicios críticos
+  hosts: all
+  become: true
+
+  vars:
+    servicios_a_revisar:
+      - sshd
+      - nginx
+      - docker
+
+  tasks:
+    - name: Obtener información del estado de los servicios
+      ansible.builtin.service_facts:
+
+    - name: Reportar si algún servicio crítico está detenido
+      ansible.builtin.debug:
+        msg: "[ERROR] El servicio {{ item }} no está en ejecución."
+      loop: "{{ servicios_a_revisar }}"
+      when: 
+        - item in ansible_facts.services
+        - ansible_facts.services[item ~ '.service']['state'] != 'running'
