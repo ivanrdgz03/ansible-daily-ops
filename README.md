@@ -28,6 +28,14 @@ Este repositorio contiene la infraestructura como código (IaC) y playbooks del 
 - `deploy_tls.yml`: Distribuye certificados públicos y claves privadas con permisos restrictivos (`0600`), recargando el servicio web si hay cambios.
 - `check_tls_expiration.yml`: Lee el certificado del servidor y lanza una alerta si caduca en menos de 15 días.
 
+## ⚙️ Requisitos Previos
+
+Si estás utilizando `ansible-core` o un entorno nuevo, asegúrate de instalar las colecciones de Ansible necesarias para que todos los módulos funcionen correctamente.
+
+Para instalar todas las dependencias necesarias de golpe, ejecuta:
+```bash
+ansible-galaxy collection install -r requirements.yml
+```
 ## 🚀 Uso Básico
 
 **Probar conectividad del inventario:**
